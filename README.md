@@ -17,7 +17,7 @@ Agendify is a web-based appointment management system designed to help businesse
 ```bash
 git clone https://github.com/rafaellavborba/agendify.git
 cd agendify
-
+```
 
 2. Install dependencies via Composer:
 
