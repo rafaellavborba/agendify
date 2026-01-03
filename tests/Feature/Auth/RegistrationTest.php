@@ -9,16 +9,22 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_new_users_can_register(): void
+   public function test_new_users_can_register(): void
     {
-        $response = $this->post('/register', [
+        $response = $this->postJson('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'company_name' => 'Test Company',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertNoContent();
+        $response->assertStatus(201)
+                ->assertJsonStructure([
+                    'tenant' => ['id', 'name', 'created_at', 'updated_at'],
+                    'user' => ['id', 'name', 'email', 'tenant_id', 'created_at', 'updated_at'],
+                    'token',
+                ]);
     }
+
 }

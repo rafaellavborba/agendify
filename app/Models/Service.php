@@ -14,11 +14,5 @@ class Service extends Model
         'name',
         'duration',
         'price',
-        'active',
     ];
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 }

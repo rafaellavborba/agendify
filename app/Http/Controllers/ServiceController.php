@@ -4,25 +4,30 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ServiceController extends Controller
 {
     public function index()
     {
-        return Service::where('tenant_id', app('tenant_id'))->get();
+        return Service::where('tenant_id', app('tenant_id'))
+            ->orderBy('name')
+            ->get();
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string',
-            'duration' => 'required|integer|min:5',
-            'price' => 'nullable|numeric',
+            'name' => 'required|string|max:255',
+            'duration' => 'required|integer|min:1',
+            'price' => 'required|numeric|min:0',
         ]);
 
         $data['tenant_id'] = app('tenant_id');
 
-        return Service::create($data);
+        $service = Service::create($data);
+
+        return response()->json($service, 201);
     }
 
     public function show(Service $service)
@@ -35,7 +40,13 @@ class ServiceController extends Controller
     {
         $this->authorizeTenant($service);
 
-        $service->update($request->only('name', 'duration', 'price', 'active'));
+        $data = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'duration' => 'sometimes|integer|min:1',
+            'price' => 'sometimes|numeric|min:0',
+        ]);
+
+        $service->update($data);
 
         return $service;
     }

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,38 +11,52 @@ class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    private function createUser()
     {
-        $user = User::factory()->create();
+        $tenant = Tenant::factory()->create();
+        $user = User::factory()->create([
+            'tenant_id' => $tenant->id,
+            'password' => bcrypt('password'),
+        ]);
 
-        $response = $this->post('/login', [
+        return [$user, $tenant];
+    }
+
+    public function test_users_can_authenticate_using_login_screen()
+    {
+        [$user, $tenant] = $this->createUser();
+
+        $response = $this->postJson('/api/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertNoContent();
+        $response->assertStatus(200)
+                 ->assertJsonStructure(['token', 'user']);
     }
 
-    public function test_users_can_not_authenticate_with_invalid_password(): void
+    public function test_users_cannot_authenticate_with_invalid_password()
     {
-        $user = User::factory()->create();
+        [$user, $tenant] = $this->createUser();
 
-        $this->post('/login', [
+        $response = $this->postJson('/api/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
 
-        $this->assertGuest();
+        $response->assertStatus(401)
+                 ->assertJson(['message' => 'Credenciais inválidas']);
     }
 
-    public function test_users_can_logout(): void
+    public function test_users_can_logout()
     {
-        $user = User::factory()->create();
+        [$user, $tenant] = $this->createUser();
+        $token = $user->createToken('api-token')->plainTextToken;
 
-        $response = $this->actingAs($user)->post('/logout');
+        $response = $this->withHeaders([
+            'Authorization' => "Bearer $token",
+        ])->postJson('/api/logout');
 
-        $this->assertGuest();
-        $response->assertNoContent();
+        $response->assertStatus(204);
     }
 }
