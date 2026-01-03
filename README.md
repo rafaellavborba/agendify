@@ -21,23 +21,30 @@ cd agendify
 
 2. Install dependencies via Composer:
 
+```bash 
 composer install
+```
 
 3. Copy the environment file and set your configuration:
 
+```bash
 cp .env.example .env
 php artisan key:generate
+```
 
 4. Set up your database in the .env file and run migrations:
 
+```bash
 php artisan migrate
+```
 
 5. Set up your database in the .env file and run migrations:
 
+```bash
 php artisan migrate
+```
 
-
-Usage
+## USAGE
 
 Use the API endpoints to manage appointments, services, and tenants.
 
@@ -45,17 +52,17 @@ Supports filtering and sorting of services and appointments.
 
 Authentication is handled via Sanctum (API tokens).
 
-Technologies
+## TECHNOLOGIES
 
-Backend: Laravel 12, PHP 8+
+**Backend**: Laravel 12, PHP 8+
 
-Database: MySQL / MariaDB (configurable)
+**Database**: MySQL / MariaDB (configurable)
 
-Authentication: Laravel Sanctum
+**Authentication**: Laravel Sanctum
 
-Testing: PHPUnit
+**Testing**: PHPUnit
 
-Contributing
+## Contributing
 
 Fork the repository.
 
@@ -69,6 +76,6 @@ Push to the branch: git push origin feature/your-feature.
 
 Open a Pull Request.
 
-License
+## License
 
 This project is open-source and available under the MIT License.
