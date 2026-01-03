@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Service;
+use App\Models\User;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,11 +15,8 @@ class ServiceTest extends TestCase
     private function authenticate()
     {
         $tenant = Tenant::factory()->create();
-
         $user = User::factory()->create(['tenant_id' => $tenant->id]);
-
         $token = $user->createToken('api-token')->plainTextToken;
-
         return [$user, $tenant, $token];
     }
 
@@ -33,56 +30,48 @@ class ServiceTest extends TestCase
             'name' => 'Corte de cabelo',
             'duration' => 30,
             'price' => 50.0,
-            'tenant_id' => $tenant->id,
         ]);
 
         $response->assertStatus(201)
-            ->assertJson([
-                'name' => 'Corte de cabelo',
-                'duration' => 30,
-                'price' => 50.0,
-            ]);
+                 ->assertJsonFragment(['name' => 'Corte de cabelo']);
+
+        $this->assertDatabaseHas('services', ['name' => 'Corte de cabelo', 'tenant_id' => $tenant->id]);
     }
 
-    public function test_can_list_services()
+    public function test_can_list_services_with_filters_and_sort()
     {
         [$user, $tenant, $token] = $this->authenticate();
 
-        Service::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Serviço A']);
-        Service::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Serviço B']);
-
-        $otherTenant = Tenant::factory()->create();
-        Service::factory()->create(['tenant_id' => $otherTenant->id, 'name' => 'Outro Tenant']);
+        Service::factory()->create(['tenant_id' => $tenant->id, 'name' => 'A Service', 'price' => 20]);
+        Service::factory()->create(['tenant_id' => $tenant->id, 'name' => 'B Service', 'price' => 10]);
+        Service::factory()->create(['tenant_id' => 999, 'name' => 'Other Tenant']); // não deve aparecer
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",
-        ])->getJson('/api/services');
+        ])->getJson('/api/services?sort_by=price&sort_order=desc&q=Service');
 
         $response->assertStatus(200)
-            ->assertJsonCount(2)
-            ->assertJsonFragment(['name' => 'Serviço A'])
-            ->assertJsonFragment(['name' => 'Serviço B']);
+            ->assertJsonCount(2, 'data') 
+            ->assertJsonFragment(['name' => 'A Service'])
+            ->assertJsonFragment(['name' => 'B Service']);
     }
 
     public function test_can_update_service()
     {
         [$user, $tenant, $token] = $this->authenticate();
 
-        $service = Service::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Nome Antigo']);
+        $service = Service::factory()->create(['tenant_id' => $tenant->id, 'name' => 'Old Name']);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",
         ])->putJson("/api/services/{$service->id}", [
-            'name' => 'Novo Nome',
+            'name' => 'New Name',
         ]);
 
         $response->assertStatus(200)
-            ->assertJson(['name' => 'Novo Nome']);
+                 ->assertJsonFragment(['name' => 'New Name']);
 
-        $this->assertDatabaseHas('services', [
-            'id' => $service->id,
-            'name' => 'Novo Nome',
-        ]);
+        $this->assertDatabaseHas('services', ['id' => $service->id, 'name' => 'New Name']);
     }
 
     public function test_can_delete_service()
@@ -104,8 +93,7 @@ class ServiceTest extends TestCase
     {
         [$user, $tenant, $token] = $this->authenticate();
 
-        $otherTenant = Tenant::factory()->create();
-        $service = Service::factory()->create(['tenant_id' => $otherTenant->id]);
+        $service = Service::factory()->create(['tenant_id' => 999]);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",

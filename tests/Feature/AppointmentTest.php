@@ -41,10 +41,10 @@ class AppointmentTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                 ->assertJson([
-                     'client_name' => 'Maria Silva',
-                     'status' => 'pending',
-                 ]);
+            ->assertJson([
+                'client_name' => 'Maria Silva',
+                'status' => 'pending',
+            ]);
 
         $this->assertDatabaseHas('appointments', [
             'client_name' => 'Maria Silva',
@@ -78,9 +78,9 @@ class AppointmentTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonFragment([
-                     'start_time' => ['Já existe um agendamento nesse horário.']
-                 ]);
+            ->assertJsonFragment([
+                'start_time' => ['Já existe um agendamento nesse horário.']
+            ]);
     }
 
     public function test_list_appointments()
@@ -112,9 +112,10 @@ class AppointmentTest extends TestCase
         ])->getJson('/api/appointments');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(2)
-                 ->assertJsonFragment(['client_name' => 'Cliente A'])
-                 ->assertJsonFragment(['client_name' => 'Cliente B']);
+            ->assertJsonCount(2, 'data')
+            ->assertJsonFragment(['client_name' => 'Cliente A'])
+            ->assertJsonFragment(['client_name' => 'Cliente B']);
+
     }
 
     public function test_show_appointment()
@@ -132,10 +133,10 @@ class AppointmentTest extends TestCase
         ])->getJson("/api/appointments/{$appointment->id}");
 
         $response->assertStatus(200)
-                 ->assertJson([
-                     'id' => $appointment->id,
-                     'tenant_id' => $tenant->id,
-                 ]);
+            ->assertJson([
+                'id' => $appointment->id,
+                'tenant_id' => $tenant->id,
+            ]);
     }
 
     public function test_update_appointment()

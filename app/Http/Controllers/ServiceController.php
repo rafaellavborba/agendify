@@ -3,16 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Traits\HasFilters;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class ServiceController extends Controller
 {
-    public function index()
+    use HasFilters;
+
+    public function index(Request $request) 
     {
-        return Service::where('tenant_id', app('tenant_id'))
-            ->orderBy('name')
-            ->get();
+        $query = Service::where('tenant_id', app('tenant_id'));
+
+        $query = $this->applyFilters($query, $request, ['q', 'duration', 'price', 'status']);
+
+        $sortBy = $request->get('sort_by', 'name');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        $allowedSorts = ['name', 'duration', 'price', 'status'];
+        if (!in_array($sortBy, $allowedSorts)) {
+            $sortBy = 'name';
+        }
+
+        $query->orderBy($sortBy, $sortOrder);
+
+        $perPage = $request->get('per_page', 15);
+        $services = $query->paginate($perPage);
+
+        return response()->json($services);
     }
 
     public function store(Request $request)

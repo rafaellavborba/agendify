@@ -5,18 +5,34 @@ namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\Service;
 use App\Models\Tenant;
+use App\Traits\HasFilters;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class AppointmentController extends Controller
 {
-    public function index()
+    use HasFilters;
+
+    public function index(Request $request)
     {
-        return Appointment::where('tenant_id', app('tenant_id'))
-            ->with('service')
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
+         
+        $query = Appointment::where('tenant_id', app('tenant_id'));
+
+        $filters = [
+            'date' => 'exact',
+            'service_id' => 'exact',
+            'status' => 'exact',
+            'q' => 'like',
+        ];
+
+        $searchable = ['client_name', 'client_phone']; // campos pesquisáveis pelo 'q'
+        $allowedSorts = ['date', 'start_time', 'client_name', 'status'];
+
+        $query = $this->applyFilters($query, $request, $filters, $searchable, $allowedSorts, 'date');
+
+        $appointments = $query->paginate($request->get('per_page', 15));
+
+        return response()->json($appointments);
     }
 
     public function store(Request $request)
